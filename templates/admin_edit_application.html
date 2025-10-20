@@ -1,0 +1,37 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="max-w-3xl bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mx-auto">
+  <h2 class="text-xl font-semibold mb-4">管理員編輯申請 - {{ app.form_number }}</h2>
+  <form method="post" class="space-y-3">
+    <div><label class="block text-sm text-slate-600 mb-1">活動名稱</label><input name="title" class="w-full border border-slate-200 p-3 rounded-xl" value="{{ app.title }}"></div>
+    <div class="grid md:grid-cols-2 gap-4">
+      <div><label class="block text-sm text-slate-600 mb-1">負責人班級</label><input name="leader_class" class="w-full border border-slate-200 p-3 rounded-xl" value="{{ app.leader_class }}"></div>
+      <div><label class="block text-sm text-slate-600 mb-1">負責人姓名</label><input name="leader_name" class="w-full border border-slate-200 p-3 rounded-xl" value="{{ app.leader_name }}"></div>
+    </div>
+    <div><label class="block text-sm text-slate-600 mb-1">協辦單位</label><input name="co_org" class="w-full border border-slate-200 p-3 rounded-xl" value="{{ app.co_org or '' }}"></div>
+    <div class="grid md:grid-cols-2 gap-4">
+      <div><label class="block text-sm text-slate-600 mb-1">開始時間</label><input name="start_at" class="w-full border border-slate-200 p-3 rounded-xl" value="{{ app.start_at }}"></div>
+      <div><label class="block text-sm text-slate-600 mb-1">結束時間</label><input name="end_at" class="w-full border border-slate-200 p-3 rounded-xl" value="{{ app.end_at }}"></div>
+    </div>
+    <div class="grid md:grid-cols-3 gap-4">
+      <div><label class="block text-sm text-slate-600 mb-1">預計人數</label><input name="expected_people" class="w-full border border-slate-200 p-3 rounded-xl" value="{{ app.expected_people }}"></div>
+      <div><label class="block text-sm text-slate-600 mb-1">地點</label><input name="location" class="w-full border border-slate-200 p-3 rounded-xl" value="{{ app.location }}"></div>
+      <div><label class="block text-sm text-slate-600 mb-1">對象</label><input name="target" class="w-full border border-slate-200 p-3 rounded-xl" value="{{ app.target }}"></div>
+    </div>
+    <div><label class="block text-sm text-slate-600 mb-1">目的</label><textarea name="purpose" class="w-full border border-slate-200 p-3 rounded-xl">{{ app.purpose }}</textarea></div>
+    <div class="grid md:grid-cols-2 gap-4">
+      <div><label class="block text-sm text-slate-600 mb-1">狀態</label><input name="status_labels" class="w-full border border-slate-200 p-3 rounded-xl" value="{{ status_labels(app.status) }}"></div>
+      <div><label class="block text-sm text-slate-600 mb-1">目前階段</label><input name="step_labels" class="w-full border border-slate-200 p-3 rounded-xl" value="{{ app.step_labels }}"></div>
+    </div>
+    <div><label class="block text-sm text-slate-600 mb-1">管理員備註</label><input name="admin_note" class="w-full border border-slate-200 p-3 rounded-xl"></div>
+    <button class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-xl">儲存</button>
+  </form>
+  <h3 class="text-lg font-semibold mt-6">經費明細</h3>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead><tr class="text-left text-slate-500"><th class="py-2">款項</th><th>用途</th><th>金額</th></tr></thead>
+      <tbody>{% for it in items %}<tr class="border-t"><td class="py-2">{{ it.name }}</td><td>{{ it.purpose }}</td><td>{{ it.amount }}</td></tr>{% endfor %}</tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

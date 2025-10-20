@@ -1,0 +1,13 @@
+Flask==2.2.5
+
+openpyxl
+reportlab
+
+openpyxl
+reportlab
+
+openpyxl
+reportlab
+
+openpyxl
+reportlab

@@ -1,0 +1,130 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+  <div class="flex items-center justify-between">
+    <h2 class="text-xl font-semibold">申請詳情</h2>
+    <span class="text-sm text-slate-500">編號：{{ app.form_number }}</span>
+  </div>
+
+  <div class="grid md:grid-cols-2 gap-4 mt-4">
+    <div><div class="text-slate-500 text-sm">標題</div><div class="font-medium">{{ app.title }}</div></div>
+    <div><div class="text-slate-500 text-sm">申請人</div><div class="font-medium">{{ app.applicant_name }}</div></div>
+    <div><div class="text-slate-500 text-sm">單位</div><div class="font-medium">{{ app.org_name or '-' }}</div></div>
+    <div><div class="text-slate-500 text-sm">狀態</div>
+      <span class="px-2 py-1 rounded-md text-xs
+        {% if app.status=='approved' %} bg-emerald-50 text-emerald-700 border border-emerald-200
+        {% elif app.status=='rejected' %} bg-rose-50 text-rose-700 border border-rose-200
+        {% else %} bg-slate-50 text-slate-700 border border-slate-200 {% endif %}">
+        {{ status_label(app.status) }} / {{ step_label(app.current_step) }}
+      </span>
+    </div>
+  </div>
+
+  <hr class="my-4">
+
+  <div class="grid md:grid-cols-2 gap-4">
+    <div><div class="text-slate-500 text-sm">活動時間</div><div class="font-medium">{{ app.start_at }} ~ {{ app.end_at }}</div></div>
+    <div><div class="text-slate-500 text-sm">負責人</div><div class="font-medium">{{ app.leader_name }}（{{ app.leader_class }}）</div></div>
+    <div><div class="text-slate-500 text-sm">地點</div><div class="font-medium">{{ app.location }}</div></div>
+    <div><div class="text-slate-500 text-sm">預計人數</div><div class="font-medium">{{ app.expected_people }}</div></div>
+    <div class="md:col-span-2"><div class="text-slate-500 text-sm">目的</div><div class="font-medium whitespace-pre-line">{{ app.purpose }}</div></div>
+  </div>
+
+  <h3 class="text-lg font-semibold mt-6">經費明細</h3>
+  <div class="overflow-x-auto mt-2">
+    <table class="w-full text-sm">
+      <thead><tr class="text-left text-slate-500"><th class="py-2">款項</th><th>用途</th><th>金額</th></tr></thead>
+      <tbody>
+      {% for it in items %}
+        <tr class="border-t"><td class="py-2">{{ it.name }}</td><td>{{ it.purpose }}</td><td>{{ it.amount }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="mt-2 text-right text-lg">總計：<span class="font-semibold">{{ app.total_amount }}</span></div>
+
+  {% if reviews %}
+  <h3 class="text-lg font-semibold mt-8">審核紀錄</h3>
+  <div class="overflow-x-auto mt-2">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="text-left text-slate-500">
+          <th class="py-2">審核者</th>
+          <th>角色</th>
+          <th>決定</th>
+          <th>核定金額</th>
+          <th>備註／原因</th>
+          <th>時間</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in reviews %}
+        <tr class="border-t">
+          <td class="py-2">{{ r.reviewer_name }}</td>
+          <td>{{ role_label(r.role) }}</td>
+          <td>
+            <span class="px-2 py-1 rounded-md text-xs {% if r.decision=='approve' %}bg-emerald-50 text-emerald-700 border border-emerald-200{% else %}bg-rose-50 text-rose-700 border border-rose-200{% endif %}">
+              {{ '通過' if r.decision=='approve' else '不通過' }}
+            </span>
+          </td>
+          <td>{{ r.amount_approved or '-' }}</td>
+          <td class="whitespace-pre-line">{{ r.comment or '-' }}</td>
+          <td>{{ r.created_at }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  <!-- ✅ 動態核銷按鈕 -->
+  {% if app.status == 'approved' %}
+    {% if app.reimb_id %}
+      <div class="mt-6">
+        <a href="{{ url_for('reimburse_view', rid=app.reimb_id) }}" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl inline-flex items-center gap-2">
+          <i data-feather="file-text"></i> 查看核銷
+        </a>
+      </div>
+    {% else %}
+      <div class="mt-6">
+        <a href="{{ url_for('reimburse_new', aid=app.id) }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl inline-flex items-center gap-2">
+          <i data-feather="file-plus"></i> 建立核銷
+        </a>
+      </div>
+    {% endif %}
+  {% endif %}
+
+  {% if can_edit %}
+  <div class="mt-6">
+    <a href="{{ url_for('edit_application', aid=app.id) }}" class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-xl inline-flex items-center gap-2">
+      <i data-feather="edit-3"></i> 編輯 / 重送
+    </a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% if can_review %}
+<div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 mt-6">
+  <h3 class="text-lg font-semibold mb-3">審核操作</h3>
+  <form method="POST" action="{{ url_for('review_application', aid=app.id) }}">
+    <label class="block mb-2 font-medium">審核決定：</label>
+    <select name="decision" class="border rounded-lg px-3 py-2 w-full mb-3">
+      <option value="approve">通過</option>
+      <option value="reject">不通過</option>
+    </select>
+
+    <label class="block mb-2 font-medium">不通過原因／備註：</label>
+    <textarea name="comment" class="border rounded-lg px-3 py-2 w-full h-24 mb-3"></textarea>
+
+    {% if user.role == 'parliament_chair' %}
+    <label class="block mb-2 font-medium">核定金額（通過時必填）：</label>
+    <input type="number" step="1" name="amount_approved" class="border rounded-lg px-3 py-2 w-full mb-3">
+    {% endif %}
+
+    <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl">
+      提交審核
+    </button>
+  </form>
+</div>
+{% endif %}

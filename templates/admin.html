@@ -1,0 +1,107 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="grid gap-6">
+  <!-- 🧍 使用者管理區塊 -->
+  <section class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-xl font-semibold">使用者管理</h2>
+      <a href="{{ url_for('admin_register') }}" class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-xl inline-flex items-center gap-2">
+        <i data-feather="user-plus"></i> 新增使用者
+      </a>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="text-left text-slate-500">
+            <th class="py-2">ID</th>
+            <th>帳號</th>
+            <th>姓名</th>
+            <th>角色</th>
+            <th>所屬單位</th>
+            <th>負責教師</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for urec in users %}
+          <tr class="border-t">
+            <td class="py-2">{{ urec.id }}</td>
+            <td>{{ urec.username }}</td>
+            <td>{{ urec.display_name }}</td>
+            <td>{{ role_label(urec.role) }}</td>
+            <td>{{ urec.org_id or '-' }}</td>
+            <td>
+              {% set tname='-' %}
+              {% for a in assigns %}
+                {% if a.org_id==urec.org_id %}
+                  {% set tname=a.teacher %}
+                {% endif %}
+              {% endfor %}
+              {{ tname }}
+            </td>
+            <td class="space-x-3">
+              <a href="{{ url_for('admin_edit_user', uid=urec.id) }}" class="text-blue-600 hover:underline">編輯</a>
+              {% if urec.role != 'admin' %}
+              <form method="post" action="{{ url_for('admin_delete_user', uid=urec.id) }}" style="display:inline;" onsubmit="return confirm('確定要刪除使用者 {{ urec.display_name }} 嗎？此動作無法復原');">
+                <button type="submit" class="text-rose-600 hover:underline">刪除</button>
+              </form>
+              {% else %}
+                <span class="text-slate-400">（保留）</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 🏫 單位管理 -->
+  <section class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+    <h2 class="text-xl font-semibold mb-4">系會社團單位管理</h2>
+    <form method="post" action="{{ url_for('admin_add_org') }}" class="flex gap-2 mb-4">
+      <input name="name" class="border border-slate-200 p-3 rounded-xl flex-1" placeholder="新增單位名稱（例如：系會C）" required>
+      <button class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-xl">新增單位</button>
+    </form>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead><tr class="text-left text-slate-500"><th class="py-2">ID</th><th>名稱</th><th>操作</th></tr></thead>
+        <tbody>
+        {% for o in orgs %}
+          <tr class="border-t">
+            <td class="py-2">{{ o.id }}</td>
+            <td>{{ o.name }}</td>
+            <td>
+              {% if o.name != '學生會' %}
+              <form method="post" action="{{ url_for('admin_delete_org', oid=o.id) }}" onsubmit="return confirm('確定刪除此單位？');" style="display:inline">
+                <button class="text-rose-600 hover:underline">刪除</button>
+              </form>
+              {% else %}
+                <span class="text-slate-400">（保留系統單位）</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <h2 class="text-xl font-semibold my-4">老師分配</h2>
+    <form method="post" action="{{ url_for('admin_assign_teacher') }}" class="grid md:grid-cols-3 gap-2 mb-3">
+      <select name="teacher_id" class="border border-slate-200 p-3 rounded-xl">
+        {% for t in users if t.role=='org_teacher' %}
+          <option value="{{ t.id }}">{{ t.display_name }} ({{ t.username }})</option>
+        {% endfor %}
+      </select>
+      <select name="org_id" class="border border-slate-200 p-3 rounded-xl">
+        {% for o in orgs if o.name!='學生會' %}
+          <option value="{{ o.id }}">{{ o.name }}</option>
+        {% endfor %}
+      </select>
+      <button class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-xl">分配</button>
+    </form>
+  </section>
+</div>
+{% endblock %}

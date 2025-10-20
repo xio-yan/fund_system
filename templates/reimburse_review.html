@@ -1,0 +1,194 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="grid lg:grid-cols-3 gap-6">
+
+  <!-- 左側：核銷資料 -->
+  <section class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 lg:col-span-2">
+    <h2 class="text-xl font-semibold mb-4">核銷審核</h2>
+
+    <!-- 🔹 原申請經費明細 -->
+{% if app_items %}
+<div class="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-5">
+  <h3 class="text-lg font-semibold mb-2">原申請經費明細</h3>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="text-left text-slate-500 border-b">
+          <th class="py-2">項目</th>
+          <th>用途</th>
+          <th>金額</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ai in app_items %}
+        <tr class="border-t hover:bg-slate-50">
+          <td class="py-2">{{ ai.name }}</td>
+          <td>{{ ai.purpose }}</td>
+          <td>{{ ai.amount }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+
+    <!-- 狀態資訊 -->
+    <div class="grid md:grid-cols-2 gap-4 mb-4">
+      <div>
+        <div class="text-slate-500 text-sm">狀態</div>
+        <div class="font-medium">
+          <span class="px-2 py-1 rounded-md text-xs
+            {% if r.status=='completed' %} bg-emerald-50 text-emerald-700 border border-emerald-200
+            {% elif r.status=='rejected' %} bg-rose-50 text-rose-700 border border-rose-200
+            {% elif r.status in ['submitted','in_progress'] %} bg-sky-50 text-sky-700 border border-sky-200
+            {% else %} bg-slate-50 text-slate-700 border border-slate-200 {% endif %}
+          ">
+            {{ status_label(r.status) }}
+          </span>
+        </div>
+      </div>
+
+      <div>
+        <div class="text-slate-500 text-sm">目前階段</div>
+        <div class="font-medium">{{ step_label(r.current_step) }}</div>
+      </div>
+
+      <div>
+        <div class="text-slate-500 text-sm">總金額</div>
+        <div class="font-medium">{{ r.total_amount }}</div>
+      </div>
+
+      <div>
+        <div class="text-slate-500 text-sm">核定金額</div>
+        <div class="font-medium">{{ r.approved_amount or '-' }}</div>
+      </div>
+    </div>
+
+    <!-- 收據明細 -->
+    <h3 class="text-lg font-semibold mt-4 mb-2">收據明細</h3>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="text-left text-slate-500 border-b">
+            <th class="py-2">款項</th>
+            <th>用途</th>
+            <th>金額</th>
+            <th>收據</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for it in items %}
+          <tr class="border-t hover:bg-slate-50">
+            <td class="py-2">{{ it.item_name }}</td>
+            <td>{{ it.purpose }}</td>
+            <td>{{ it.amount }}</td>
+            <td>
+              {% if it.receipt_path %}
+                <a href="/{{ it.receipt_path }}" target="_blank" class="text-blue-600 hover:underline">查看</a>
+              {% else %}
+                <span class="text-slate-400">無</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 活動照片 -->
+    <h3 class="text-lg font-semibold mt-6 mb-2">活動照片</h3>
+    {% set activity_photos = photos | selectattr("type", "equalto", "activity") | list %}
+    {% if activity_photos %}
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+      {% for p in activity_photos %}
+        <a href="/{{ p.path }}" target="_blank">
+          <img src="/{{ p.path }}" class="rounded-lg border hover:opacity-80 transition">
+        </a>
+      {% endfor %}
+    </div>
+    {% else %}
+      <div class="text-slate-400 text-sm">尚未上傳活動照片</div>
+    {% endif %}
+
+    <!-- 回饋單 -->
+    <h3 class="text-lg font-semibold mt-6 mb-2">回饋單</h3>
+    {% set feedbacks = photos | selectattr("type", "equalto", "feedback") | list %}
+    {% if feedbacks %}
+      {% for p in feedbacks %}
+        <a href="/{{ p.path }}" target="_blank">
+          <img src="/{{ p.path }}" class="rounded-lg border w-64 hover:opacity-80 transition">
+        </a>
+      {% endfor %}
+    {% else %}
+      <div class="text-slate-400 text-sm">尚未上傳回饋單</div>
+    {% endif %}
+
+    <!-- 檢討事項 -->
+    <h3 class="text-lg font-semibold mt-6 mb-2">檢討事項</h3>
+    <div class="bg-slate-50 border border-slate-200 rounded-lg p-3 whitespace-pre-line text-sm">
+      {{ r.comment or '（無）' }}
+    </div>
+
+    <!-- 🔹 核銷歷程 -->
+    <h3 class="text-lg font-semibold mt-6 mb-2">核銷歷程</h3>
+    {% if reviews %}
+      <div class="bg-slate-50 border border-slate-200 rounded-lg p-3 text-sm space-y-2">
+        {% for rv in reviews %}
+        <div>
+          <div class="font-medium">{{ rv.display_name }}（{{ '通過' if rv.decision == 'approve' else '退回' }}）</div>
+          <div class="text-slate-600 whitespace-pre-line">{{ rv.comment or '（無備註）' }}</div>
+          <div class="text-xs text-slate-400">{{ rv.created_at }}</div>
+        </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="text-slate-400 text-sm">尚無歷程紀錄</div>
+    {% endif %}
+  </section>
+
+  <!-- 右側：審核表單 -->
+  <aside class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+    <form method="post" class="space-y-4" onsubmit="return confirmSubmit()">
+      <div>
+        <label class="block text-sm font-medium mb-1">審核結果</label>
+        <select name="decision" class="w-full border p-2 rounded-lg">
+          <option value="approve">通過</option>
+          <option value="reject">不通過（退回）</option>
+        </select>
+      </div>
+
+      {% if user.role == "parliament_chair" %}
+      <div>
+        <label class="block text-sm font-medium mb-1">核定金額（僅議長填寫）</label>
+        <input name="approved_amount" type="number" step="0.01" class="w-full border p-2 rounded-lg">
+      </div>
+      {% endif %}
+
+      <div>
+        <label class="block text-sm font-medium mb-1">備註／退回原因</label>
+        <textarea name="comment" rows="4" class="w-full border p-2 rounded-lg"></textarea>
+      </div>
+
+      <button type="submit"
+              class="bg-emerald-600 hover:bg-emerald-700 text-white w-full py-3 rounded-xl transition">
+        提交審核
+      </button>
+    </form>
+
+    <div class="mt-5 text-sm text-slate-500">
+      <p>目前審核角色：<strong>{{ role_label(user.role) }}</strong></p>
+      <p class="mt-1">下一步將自動流向下一層級審核。</p>
+    </div>
+  </aside>
+
+</div>
+
+<!-- ✅ 確認彈窗 -->
+<script>
+function confirmSubmit(){
+  return confirm("確定要送出這次審核嗎？");
+}
+</script>
+{% endblock %}

@@ -1,0 +1,55 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+  <div class="flex items-center justify-between mb-4">
+    <h2 class="text-xl font-semibold">核銷管理（管理員）</h2>
+    <a href="{{ url_for('admin_home') }}" class="text-sm text-blue-600 hover:underline">← 返回管理首頁</a>
+  </div>
+
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="text-left text-slate-500 border-b">
+          <th class="py-2">ID</th>
+          <th>活動名稱 / 申請單號</th>
+          <th>申請單位 / 申請人</th>
+          <th>狀態 / 階段</th>
+          <th>總金額 / 核定金額</th>
+          <th>更新時間</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        <tr class="border-t hover:bg-slate-50">
+          <td class="py-2">{{ r.id }}</td>
+          <td>
+            <div class="font-medium">{{ r.title }}</div>
+            <div class="text-slate-500 text-xs">單號：{{ r.form_number }}</div>
+          </td>
+          <td>
+            <div class="font-medium">{{ r.org_name or '—' }}</div>
+            <div class="text-slate-500 text-xs">{{ r.applicant_name }}</div>
+          </td>
+          <td>
+            <div>{{ status_label[r.status] }}</div>
+            <div class="text-slate-500 text-xs">{{ step_label[r.current_step] }}</div>
+          </td>
+          <td>
+            <div>{{ r.total_amount or 0 }}</div>
+            <div class="text-slate-500 text-xs">{{ r.approved_amount or '—' }}</div>
+          </td>
+          <td>{{ (r.updated_at or '')[:19].replace('T', ' ') }}</td>
+          <td class="space-x-2">
+            <a href="{{ url_for('reimburse_view', rid=r.id) }}" class="px-2 py-1 rounded bg-sky-600 text-white text-xs">檢視</a>
+            <form method="post" action="{{ url_for('admin_delete_reimbursement', rid=r.id) }}" class="inline-block" onsubmit="return confirm('確認刪除此核銷與其所有附件？');">
+              <button type="submit" class="px-2 py-1 rounded bg-rose-600 text-white text-xs">刪除</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

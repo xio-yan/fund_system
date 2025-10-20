@@ -1,0 +1,221 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="grid lg:grid-cols-2 gap-6">
+
+  <!-- 我的申請 -->
+  <section class="bg-white rounded-2xl shadow-sm border border-slate-200">
+    <header class="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+      <h3 class="text-lg font-semibold">我的申請</h3>
+      <span class="text-xs text-slate-500">最近</span>
+    </header>
+    <div class="p-4">
+      {% if can_apply %}
+        {% if my_apps %}
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="text-left text-slate-500">
+                  <th class="py-2">編號</th><th>標題</th><th>單位</th><th>狀態 / 階段</th><th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for a in my_apps %}
+                <tr class="border-t">
+                  <td class="py-2">{{ a.form_number }}</td>
+                  <td class="font-medium">{{ a.title }}</td>
+                  <td>{{ a.org_name or '-' }}</td>
+                  <td>
+                    {% if a.reimb_id %}
+                      <span class="px-2 py-1 rounded-md text-xs bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        核銷中：{{ step_label(a.reimb_step) if a.reimb_status != 'approved' else '已完成' }}
+                      </span>
+                    {% else %}
+                      <span class="px-2 py-1 rounded-md text-xs
+                        {% if a.status=='approved' %} bg-emerald-50 text-emerald-700 border border-emerald-200
+                        {% elif a.status=='rejected' %} bg-rose-50 text-rose-700 border border-rose-200
+                        {% else %} bg-slate-50 text-slate-700 border border-slate-200 {% endif %}">
+                        {{ status_label(a.status) }} / {{ step_label(a.current_step) }}
+                      </span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if a.reimb_id %}
+                      <a href="{{ url_for('reimburse_view', rid=a.reimb_id) }}" class="text-secondary hover:underline">查看核銷</a>
+                    {% elif a.status == 'approved' %}
+                      <a href="{{ url_for('reimburse_new', aid=a.id) }}" class="text-emerald-700 hover:underline">建立核銷</a>
+                    {% else %}
+                      <a href="{{ url_for('view_application', aid=a.id) }}" class="text-secondary hover:underline">檢視</a>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <p class="text-slate-500">尚無申請紀錄</p>
+        {% endif %}
+      {% else %}
+        <p class="text-slate-500">您沒有申請權限</p>
+      {% endif %}
+    </div>
+  </section>
+
+  <!-- 待審核申請 -->
+  <section class="bg-white rounded-2xl shadow-sm border border-slate-200">
+    <header class="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+      <h3 class="text-lg font-semibold">待您審核的申請</h3>
+      <span class="text-xs text-slate-500">目前</span>
+    </header>
+    <div class="p-4">
+      {% if can_review %}
+        {% if pending %}
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="text-left text-slate-500">
+                  <th class="py-2">編號</th><th>標題</th><th>單位</th><th>申請人</th><th>階段</th><th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for p in pending %}
+                <tr class="border-t">
+                  <td class="py-2">{{ p.form_number }}</td>
+                  <td class="font-medium">{{ p.title }}</td>
+                  <td>{{ p.org_name or '-' }}</td>
+                  <td>{{ p.applicant_name }}</td>
+                  <td>{{ step_label(p.current_step) }}</td>
+                  <td><a href="{{ url_for('review_application', aid=p.id) }}" class="text-emerald-700 hover:underline">審核</a></td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <p class="text-slate-500">沒有需要您審核的申請</p>
+        {% endif %}
+      {% else %}
+        <p class="text-slate-500">您沒有審核權限</p>
+      {% endif %}
+    </div>
+  </section>
+
+  <!-- 我審核過的申請 -->
+  <section class="bg-white rounded-2xl shadow-sm border border-slate-200 lg:col-span-2">
+    <header class="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+      <h3 class="text-lg font-semibold">我審核過的申請</h3>
+      <span class="text-xs text-slate-500">近 50 筆</span>
+    </header>
+    <div class="p-4">
+      {% if reviewed %}
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-left text-slate-500">
+                <th class="py-2">編號</th><th>標題</th><th>單位</th><th>我的決定</th><th>時間</th><th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in reviewed %}
+              <tr class="border-t">
+                <td class="py-2">{{ r.form_number }}</td>
+                <td class="font-medium">{{ r.title }}</td>
+                <td>{{ r.org_name or '-' }}</td>
+                <td>
+                  <span class="px-2 py-1 rounded-md text-xs {% if r.decision=='approve' %}bg-emerald-50 text-emerald-700 border border-emerald-200{% else %}bg-rose-50 text-rose-700 border border-rose-200{% endif %}">
+                    {{ '通過' if r.decision=='approve' else '不通過' }}
+                  </span>
+                </td>
+                <td>{{ r.reviewed_at }}</td>
+                <td><a href="{{ url_for('view_application', aid=r.id) }}" class="text-secondary hover:underline">檢視</a></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="text-slate-500">尚未有審核紀錄</p>
+      {% endif %}
+    </div>
+  </section>
+
+  <!-- 待審核核銷 -->
+  <section class="bg-white rounded-2xl shadow-sm border border-slate-200 lg:col-span-2">
+    <header class="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+      <h3 class="text-lg font-semibold">待您審核的核銷</h3>
+      <span class="text-xs text-slate-500">目前</span>
+    </header>
+    <div class="p-4">
+      {% if can_review or user.role in ['union_finance','union_treasurer','union_president','parliament_chair'] %}
+        {% if pending_reimbursements %}
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="text-left text-slate-500">
+                  <th class="py-2">活動名稱</th><th>申請人</th><th>總金額</th><th>目前階段</th><th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for r in pending_reimbursements %}
+                <tr class="border-t">
+                  <td class="py-2 font-medium">{{ r.title }}</td>
+                  <td>{{ r.applicant_name }}</td>
+                  <td>{{ r.total_amount }}</td>
+                  <td>{{ step_label(r.current_step) }}</td>
+                  <td><a href="{{ url_for('reimburse_review', rid=r.id) }}" class="text-emerald-700 hover:underline">審核</a></td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <p class="text-slate-500">目前沒有待審核的核銷</p>
+        {% endif %}
+      {% else %}
+        <p class="text-slate-500">您沒有核銷審核權限</p>
+      {% endif %}
+    </div>
+  </section>
+
+  <!-- 我審核過的核銷 -->
+  <section class="bg-white rounded-2xl shadow-sm border border-slate-200 lg:col-span-2">
+    <header class="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+      <h3 class="text-lg font-semibold">我審核過的核銷</h3>
+      <span class="text-xs text-slate-500">近 50 筆</span>
+    </header>
+    <div class="p-4">
+      {% if reviewed_reimbursements %}
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-left text-slate-500">
+                <th class="py-2">活動名稱</th><th>申請人</th><th>我的決定</th><th>時間</th><th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for rr in reviewed_reimbursements %}
+              <tr class="border-t">
+                <td class="py-2 font-medium">{{ rr.title }}</td>
+                <td>{{ rr.applicant_name }}</td>
+                <td>
+                  <span class="px-2 py-1 rounded-md text-xs 
+                    {% if rr.decision=='approved' %} bg-emerald-50 text-emerald-700 border border-emerald-200 
+                    {% elif rr.decision=='rejected' %} bg-rose-50 text-rose-700 border border-rose-200 
+                    {% else %} bg-slate-50 text-slate-700 border border-slate-200 {% endif %}">
+                    {{ status_label(rr.decision) }}
+                  </span>
+                </td>
+                <td>{{ rr.reviewed_at }}</td>
+                <td><a href="{{ url_for('reimburse_view', rid=rr.id) }}" class="text-secondary hover:underline">檢視</a></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="text-slate-500">尚無核銷審核紀錄</p>
+      {% endif %}
+    </div>
+  </section>
+</div>
+{% endblock %}

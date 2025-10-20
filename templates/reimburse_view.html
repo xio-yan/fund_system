@@ -1,0 +1,132 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+  <!-- 標題與申請編號 -->
+  <div class="flex justify-between items-center mb-4">
+    <h2 class="text-xl font-semibold">核銷詳情</h2>
+    <span class="text-sm text-slate-500">核銷編號：{{ r.id }}</span>
+  </div>
+
+  <!-- 🔹 原申請單資訊 -->
+  {% if app_info %}
+  <div class="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-6">
+    <h3 class="text-lg font-semibold mb-2">原申請資料</h3>
+    <div class="grid md:grid-cols-2 gap-2 text-sm">
+      <div><span class="text-slate-500">活動名稱：</span>{{ app_info.title }}</div>
+      <div><span class="text-slate-500">申請單號：</span>{{ app_info.form_number }}</div>
+      <div><span class="text-slate-500">申請單位：</span>{{ app_info.org_name }}</div>
+      <div><span class="text-slate-500">申請人：</span>{{ app_info.applicant_name }}</div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- 狀態與金額摘要 -->
+  <div class="grid md:grid-cols-2 gap-4 mb-4">
+    <div>
+      <div class="text-slate-500 text-sm">狀態</div>
+      <div class="font-medium">{{ status_label(r.status) }}</div>
+    </div>
+    <div>
+      <div class="text-slate-500 text-sm">目前階段</div>
+      <div class="font-medium">{{ step_label(r.current_step) }}</div>
+    </div>
+    <div>
+      <div class="text-slate-500 text-sm">總金額</div>
+      <div class="font-medium">{{ r.total_amount }}</div>
+    </div>
+    <div>
+      <div class="text-slate-500 text-sm">核定金額</div>
+      <div class="font-medium">{{ r.approved_amount or '-' }}</div>
+    </div>
+  </div>
+
+  <!-- 收據明細 -->
+  <h3 class="text-lg font-semibold mt-6 mb-2">收據明細</h3>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="text-left text-slate-500 border-b">
+          <th class="py-2">款項</th>
+          <th>用途</th>
+          <th>金額</th>
+          <th>收據照片</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for it in items %}
+        <tr class="border-t hover:bg-slate-50">
+          <td class="py-2">{{ it.item_name }}</td>
+          <td>{{ it.purpose }}</td>
+          <td>{{ it.amount }}</td>
+          <td>
+            {% if it.receipt_path %}
+              <a href="/{{ it.receipt_path }}" target="_blank" class="text-blue-600 hover:underline">查看</a>
+            {% else %}
+              <span class="text-slate-400">無</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 活動照片 -->
+  <h3 class="text-lg font-semibold mt-6 mb-2">活動照片</h3>
+  {% if photos | selectattr("type", "equalto", "activity") | list %}
+  <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+    {% for p in photos if p.type == 'activity' %}
+      <a href="/{{ p.path }}" target="_blank">
+        <img src="/{{ p.path }}" class="rounded-lg border hover:opacity-80 transition">
+      </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="text-slate-400 text-sm">尚未上傳活動照片</div>
+  {% endif %}
+
+  <!-- 回饋單 -->
+  <h3 class="text-lg font-semibold mt-6 mb-2">回饋單</h3>
+  {% for p in photos if p.type == 'feedback' %}
+    <a href="/{{ p.path }}" target="_blank">
+      <img src="/{{ p.path }}" class="rounded-lg border w-64 hover:opacity-80 transition">
+    </a>
+  {% else %}
+    <div class="text-slate-400 text-sm">尚未上傳回饋單</div>
+  {% endfor %}
+
+  <!-- 檢討事項 -->
+  <h3 class="text-lg font-semibold mt-6 mb-2">檢討事項</h3>
+  <div class="bg-slate-50 rounded-lg p-3 whitespace-pre-line text-sm">
+    {{ r.comment or '（無）' }}
+  </div>
+
+  <!-- 審核按鈕 -->
+  {% if user.id == r.applicant_id and r.status == 'rejected' %}
+<div class="mt-6 text-right">
+  <a href="{{ url_for('reimburse_edit', rid=r.id) }}"
+     class="bg-amber-600 hover:bg-amber-700 text-white px-5 py-2 rounded-xl transition">
+     重新送出核銷
+  </a>
+
+<h3 class="text-lg font-semibold mt-6 mb-2">核銷歷程</h3>
+{% set history = reviews %}
+{% if history %}
+<div class="bg-slate-50 rounded-lg border border-slate-200 p-3 text-sm space-y-2">
+  {% for h in history %}
+  <div>
+    <div class="font-medium">{{ h.display_name }}（{{ '通過' if h.decision == 'approve' else '退回' }}）</div>
+    <div class="text-slate-600 whitespace-pre-line">{{ h.comment or '（無備註）' }}</div>
+    <div class="text-xs text-slate-400">{{ h.created_at }}</div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="text-slate-400 text-sm">尚無核銷歷程</div>
+{% endif %}
+
+
+</div>
+{% endif %}
+</div>
+{% endblock %}

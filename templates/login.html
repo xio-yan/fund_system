@@ -1,0 +1,27 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="min-h-[70vh] grid place-items-center">
+  <div class="backdrop-blur bg-white/70 border border-slate-200 p-8 rounded-2xl shadow-xl w-full max-w-md">
+    <div class="flex items-center gap-3 mb-6">
+      <div class="bg-primary/10 p-3 rounded-xl text-primary"><i data-feather="key"></i></div>
+      <div>
+        <div class="text-xl font-semibold">實踐大學高雄校區學生會費申請系統</div>
+        <div class="text-slate-500 text-sm">請登入以繼續</div>
+      </div>
+    </div>
+    <form method="post" class="space-y-4">
+      <div>
+        <label class="block text-sm mb-1 text-slate-600">帳號</label>
+        <input name="username" class="w-full border border-slate-200 focus:border-secondary outline-none p-3 rounded-xl" required>
+      </div>
+      <div>
+        <label class="block text-sm mb-1 text-slate-600">密碼</label>
+        <input type="password" name="password" class="w-full border border-slate-200 focus:border-secondary outline-none p-3 rounded-xl" required>
+      </div>
+      <button class="w-full bg-primary hover:bg-secondary text-white rounded-xl py-3 transition flex items-center justify-center gap-2">
+        <i data-feather="log-in" class="w-4 h-4"></i> 登入
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}

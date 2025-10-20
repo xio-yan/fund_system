@@ -1,0 +1,143 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="grid lg:grid-cols-3 gap-6">
+
+  <!-- 活動資訊與經費明細 -->
+  <section class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 lg:col-span-2">
+    <h2 class="text-xl font-semibold mb-2">審核申請</h2>
+    <div class="text-slate-500 text-sm mb-4">編號：{{ app.form_number }}</div>
+
+    <div class="grid md:grid-cols-2 gap-4">
+      <div>
+        <div class="text-slate-500 text-sm">標題</div>
+        <div class="font-medium">{{ app.title }}</div>
+      </div>
+      <div>
+        <div class="text-slate-500 text-sm">申請人</div>
+        <div class="font-medium">{{ app.applicant_name }}</div>
+      </div>
+      <div>
+        <div class="text-slate-500 text-sm">單位</div>
+        <div class="font-medium">{{ app.org_name or '-' }}</div>
+      </div>
+      <div>
+        <div class="text-slate-500 text-sm">目前階段</div>
+        <div class="font-medium">{{ step_label(app.current_step) }}</div>
+      </div>
+      <div>
+        <div class="text-slate-500 text-sm">狀態</div>
+        <div class="font-medium">{{ status_label(app.status) }}</div>
+      </div>
+    </div>
+
+    <!-- 活動詳細資訊 -->
+    <h3 class="text-lg font-semibold mt-6">活動資訊</h3>
+    <div class="grid md:grid-cols-2 gap-4 mt-2">
+      <div>
+        <div class="text-slate-500 text-sm">活動負責人</div>
+        <div class="font-medium">{{ app.leader_name }}（{{ app.leader_class }}）</div>
+      </div>
+      <div>
+        <div class="text-slate-500 text-sm">活動時間</div>
+        <div class="font-medium">{{ app.start_at }} ~ {{ app.end_at }}</div>
+      </div>
+      <div>
+        <div class="text-slate-500 text-sm">地點</div>
+        <div class="font-medium">{{ app.location }}</div>
+      </div>
+      <div>
+        <div class="text-slate-500 text-sm">預計人數</div>
+        <div class="font-medium">{{ app.expected_people }}</div>
+      </div>
+      <div>
+        <div class="text-slate-500 text-sm">對象</div>
+        <div class="font-medium">{{ app.target }}</div>
+      </div>
+      <div>
+        <div class="text-slate-500 text-sm">協辦單位</div>
+        <div class="font-medium">{{ app.co_org or '-' }}</div>
+      </div>
+      <div class="md:col-span-2">
+        <div class="text-slate-500 text-sm">活動目的</div>
+        <div class="font-medium whitespace-pre-line">{{ app.purpose }}</div>
+      </div>
+    </div>
+
+    <!-- 經費明細 -->
+    <h3 class="text-lg font-semibold mt-6">經費明細</h3>
+    <div class="overflow-x-auto mt-2">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="text-left text-slate-500">
+            <th class="py-2">款項</th>
+            <th>用途</th>
+            <th>金額</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for it in items %}
+          <tr class="border-t">
+            <td class="py-2">{{ it.name }}</td>
+            <td>{{ it.purpose }}</td>
+            <td>{{ it.amount }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="mt-3 text-right text-lg">
+      總計：<span class="font-semibold">{{ app.total_amount }}</span>
+    </div>
+
+    <!-- 審核紀錄 -->
+    {% if reviews %}
+    <h3 class="text-lg font-semibold mt-6">審核紀錄</h3>
+    <div class="mt-2 border-t">
+      {% for r in reviews %}
+      <div class="py-2 border-b text-sm">
+        <div class="font-medium">{{ role_label(r.role) }}：{{ r.reviewer_name }}</div>
+        <div class="text-slate-600">
+          決定：<strong>{{ '通過' if r.decision == 'approve' else '不通過' }}</strong>
+          {% if r.amount_approved %}，核定金額：{{ r.amount_approved }}{% endif %}
+        </div>
+        {% if r.comment %}
+        <div class="text-slate-500 mt-1 whitespace-pre-line">備註：{{ r.comment }}</div>
+        {% endif %}
+        <div class="text-xs text-slate-400 mt-1">時間：{{ r.created_at }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </section>
+
+  <!-- 審核表單 -->
+  <aside class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+    <form method="post" class="space-y-3">
+      <div>
+        <label class="block text-sm text-slate-600 mb-1">決定</label>
+        <select name="decision" class="w-full border border-slate-200 p-3 rounded-xl">
+          <option value="approve">通過</option>
+          <option value="reject">不通過（退回）</option>
+        </select>
+      </div>
+
+      {% if user.role == "parliament_chair" %}
+      <div>
+        <label class="block text-sm text-slate-600 mb-1">核定金額（僅議長可填）</label>
+        <input name="amount_approved" class="w-full border border-slate-200 p-3 rounded-xl">
+      </div>
+      {% endif %}
+
+      <div>
+        <label class="block text-sm text-slate-600 mb-1">不通過原因 / 備註</label>
+        <textarea name="comment" class="w-full border border-slate-200 p-3 rounded-xl"></textarea>
+      </div>
+
+      <button class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-xl flex items-center justify-center gap-2">
+        <i data-feather="check-circle"></i> 送出審核
+      </button>
+    </form>
+  </aside>
+
+</div>
+{% endblock %}

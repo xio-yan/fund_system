@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>實踐大學高雄校區學生會費申請及核銷系統</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/feather-icons"></script>
+  <script>
+    tailwind.config = { theme: { extend: { colors: { primary: { DEFAULT:'#0C4A6E' }, secondary: '#0369A1' } } } };
+  </script>
+</head>
+<body class="bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen">
+<header class="bg-primary shadow-md">
+  <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between text-white">
+    <div class="flex items-center gap-3">
+      <div class="bg-white/20 p-2 rounded-xl"><i data-feather="layers"></i></div>
+      <div class="font-semibold text-lg">實踐大學高雄校區學生會費申請及核銷系統</div>
+    </div>
+    <nav class="flex items-center gap-4 text-sm">
+      {% if user %}
+        <span class="hidden md:inline opacity-90">您好，{{ session.name }}（{{ role_label(user.role) }}）</span>
+        <a href="{{ url_for('dashboard') }}" class="hover:underline">首頁</a>
+        {% if user.role in ['org','union_president','union_finance','union_treasurer','union_other','parliament_chair'] %}
+          <a href="{{ url_for('new_application') }}" class="hover:underline">新增申請</a>
+        {% endif %}
+        {% if user.role == 'admin' %}
+          <a href="{{ url_for('admin_home') }}" class="hover:underline">管理後台</a>
+          <a href="{{ url_for('admin_applications') }}" class="hover:underline">申請總覽</a>
+        {% endif %}
+        <a href="{{ url_for('logout') }}" class="inline-flex items-center gap-1 bg-white/10 px-3 py-1.5 rounded-lg hover:bg-white/20 transition"><i data-feather='log-out' class='w-4 h-4'></i>登出</a>
+      {% else %}
+        <a href="{{ url_for('login') }}" class="hover:underline">登入</a>
+      {% endif %}
+    </nav>
+  </div>
+</header>
+
+<main class="max-w-7xl mx-auto p-6">
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      {% for m in messages %}
+        <div class="mb-4 p-4 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl">{{ m }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+  {% block content %}{% endblock %}
+</main>
+
+<script>feather.replace()</script>
+</body>
+</html>
