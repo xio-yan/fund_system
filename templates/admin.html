@@ -88,20 +88,7 @@
       </table>
     </div>
 
-    <h2 class="text-xl font-semibold my-4">老師分配</h2>
-    <form method="post" action="{{ url_for('admin_assign_teacher') }}" class="grid md:grid-cols-3 gap-2 mb-3">
-      <select name="teacher_id" class="border border-slate-200 p-3 rounded-xl">
-        {% for t in users if t.role=='org_teacher' %}
-          <option value="{{ t.id }}">{{ t.display_name }} ({{ t.username }})</option>
-        {% endfor %}
-      </select>
-      <select name="org_id" class="border border-slate-200 p-3 rounded-xl">
-        {% for o in orgs if o.name!='學生會' %}
-          <option value="{{ o.id }}">{{ o.name }}</option>
-        {% endfor %}
-      </select>
-      <button class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-xl">分配</button>
-    </form>
+    
   </section>
 </div>
 {% endblock %}
