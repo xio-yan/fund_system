@@ -3,6 +3,27 @@ import sqlite3, os, uuid
 from datetime import datetime, timedelta
 import hashlib
 from random import randint
+import pkgutil
+import importlib.util
+import pkgutil
+import sys
+
+# 🔧 修補：為 Python 3.14 補上 get_loader 並防止 Flask 找不到 __main__
+if not hasattr(pkgutil, "get_loader"):
+    def _get_loader(name):
+        if name == "__main__":
+            # 避免 Flask 啟動時 ValueError
+            spec = importlib.util.spec_from_file_location("__main__", sys.argv[0])
+            return spec
+        return importlib.util.find_spec(name)
+    pkgutil.get_loader = _get_loader
+
+
+# 🔧 修補：為 Python 3.14 補上 get_loader
+if not hasattr(pkgutil, "get_loader"):
+    import importlib.util
+    pkgutil.get_loader = lambda name: importlib.util.find_spec(name)
+
 
 # ===== 基本設定 =====
 DB = os.path.join(os.path.dirname(__file__), 'fund_app.db')
